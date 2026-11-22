@@ -1,0 +1,81 @@
+# =============================================================================
+# WORKFLOW 1 — Python CI (Continuous Integration)
+# =============================================================================
+# 🎯 PURPOSE
+#   Run tests and linting automatically on every push or pull request.
+#   This is the most common and essential GitHub Actions workflow.
+#
+# 📚 KEY CONCEPTS
+#   - Triggers       : `on.push` / `on.pull_request`
+#   - Runners        : `ubuntu-latest` (GitHub-hosted VM)
+#   - Steps          : sequential commands inside a job
+#   - Actions        : reusable units (e.g. actions/checkout, actions/setup-python)
+#   - Matrix strategy: test against multiple Python versions in parallel
+# =============================================================================
+
+name: Python CI                        # Display name in the Actions tab
+
+# ── TRIGGERS ─────────────────────────────────────────────────
+# This workflow runs when:
+#   1. Code is pushed to 'main' or 'develop' branches
+#   2. A pull request targets 'main'
+on:
+  push:
+    branches: [ main, develop ]        # Only these branches, not feature/*
+  pull_request:
+    branches: [ main ]
+
+# ── JOBS ─────────────────────────────────────────────────────
+jobs:
+
+  # JOB: test
+  # Runs linting + unit tests across multiple Python versions
+  test:
+    name: Test (Python ${{ matrix.python-version }})   # Dynamic job name
+    runs-on: ubuntu-latest                              # GitHub-hosted runner
+
+    # MATRIX STRATEGY — run this job multiple times in parallel,
+    # once for each Python version listed below.
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      # Step 1: Check out the repository code
+      # Without this, the runner has an empty workspace.
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Install the requested Python version
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Step 3: Cache pip packages to speed up future runs
+      - name: 📦 Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # Step 4: Install dependencies
+      - name: 🔧 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Step 5: Lint with flake8
+      - name: 🔍 Lint with flake8
+        run: |
+          # Stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Warn about complexity — treat all errors as warnings (exit-zero)
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
+
+      # Step 6: Run unit tests with pytest
+      - name: 🧪 Run tests
+        run: |
+          pytest test_app.py -v --tb=short
