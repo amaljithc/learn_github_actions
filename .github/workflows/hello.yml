@@ -1,0 +1,16 @@
+name: printing commands
+on: push
+jobs:
+    linux_print:
+        name: linux job printing
+        runs-on: ubuntu-latest
+        steps:
+
+            - name: linux printing commands
+              uses: actions/checkout@v4
+
+            - name: printing pwd
+              run: pwd
+
+            - name: listing files
+              run: ls -l
