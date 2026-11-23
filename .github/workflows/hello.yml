@@ -13,4 +13,10 @@ jobs:
               run: pwd
 
             - name: listing files
-              run: ls -l
+              run: ls -la
+
+            - name: printing whoami
+              run: whoami
+
+            - name: host name 
+              run: hostname
