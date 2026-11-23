@@ -1,0 +1,11 @@
+name: learning yaml
+on: push
+jobs:
+  first_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: printing echo
+        run: echo "welcome to ubuntu linux"
+      - name: printing hostnamectl
+        run: hostnamectl
+        
